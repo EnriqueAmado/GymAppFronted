@@ -7,5 +7,5 @@ import retrofit2.http.GET;
 
 public interface ApiService {
     @GET("api/exercises/") // La ruta que creamos en Django
-    Call<List<Exercise>> getAllExercises();
+    Call<List<Exercise>> getExercises();
 }
