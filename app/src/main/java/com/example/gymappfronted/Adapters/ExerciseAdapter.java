@@ -7,6 +7,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.gymappfronted.Models.Exercise;
+import com.example.gymappfronted.R;
+
 import java.util.List;
 
 public class ExerciseAdapter extends RecyclerView.Adapter<ExerciseAdapter.ExerciseViewHolder> {
@@ -15,13 +17,14 @@ public class ExerciseAdapter extends RecyclerView.Adapter<ExerciseAdapter.Exerci
 
     // Constructor donde le pasamos los datos que vienen de Django
     public ExerciseAdapter(List<Exercise> exerciseList) {
+
         this.exerciseList = exerciseList;
     }
 
     @NonNull
     @Override
     public ExerciseViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = new View(parent.getContext());
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_exercise, parent, false);
         return new ExerciseViewHolder(view);
     }
 
@@ -29,21 +32,26 @@ public class ExerciseAdapter extends RecyclerView.Adapter<ExerciseAdapter.Exerci
     public void onBindViewHolder(@NonNull ExerciseViewHolder holder, int position) {
         // Lógica donde asignamos los datos del objeto a la vista
         Exercise exercise = exerciseList.get(position);
-        holder.bind(exercise);
+
+        // Rellenamos los textos con los datos reales del objeto
+        holder.tvExerciseName.setText(exercise.getName());
+        holder.tvDescription.setText(exercise.getDescription());
+        holder.tvBodyPart.setText(exercise.getBodyPart());
     }
 
     @Override
     public int getItemCount() {
-        return exerciseList != null ? exerciseList.size() : 0;
+
+        return exerciseList.size();
     }
 
     public static class ExerciseViewHolder extends RecyclerView.ViewHolder {
-        public ExerciseViewHolder(@NonNull View itemView) {
+        TextView tvExerciseName, tvDescription, tvBodyPart;
+        public ExerciseViewHolder(@NonNull View itemView){
             super(itemView);
-        }
-
-        public void bind(Exercise exercise) {
-
+            tvExerciseName = itemView.findViewById(R.id.tvExerciseName);
+            tvDescription = itemView.findViewById(R.id.tvDescription);
+            tvBodyPart = itemView.findViewById(R.id.tvBodyPart);
         }
     }
 }
