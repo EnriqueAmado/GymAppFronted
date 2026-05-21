@@ -3,11 +3,13 @@ import com.example.gymappfronted.Models.AuthResponse;
 import com.example.gymappfronted.Models.Exercise;
 import com.example.gymappfronted.Models.LoginRequest;
 import com.example.gymappfronted.Models.RegisterRequest;
+import com.example.gymappfronted.Models.RoutineResponse;
 
 import java.util.List;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
+import retrofit2.http.Header;
 import retrofit2.http.POST;
 
 public interface ApiService {
@@ -18,4 +20,7 @@ public interface ApiService {
 
     @POST("api/register/") // POST registro de usuario
     Call<AuthResponse> register(@Body RegisterRequest request);
+
+    @GET("api/routines/")
+    Call<List<RoutineResponse>> getUserRoutines(@Header("Authorization") String token);
 }

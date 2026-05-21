@@ -72,7 +72,7 @@ public class RegisterActivity extends AppCompatActivity {
                     Toast.makeText(RegisterActivity.this, "¡Registro completado con éxito!", Toast.LENGTH_SHORT).show();
 
                     // Saltamos al catálogo de ejercicios
-                    Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
+                    Intent intent = new Intent(RegisterActivity.this, RoutinesActivity.class);
                     startActivity(intent);
                     finish();
                 } else {
