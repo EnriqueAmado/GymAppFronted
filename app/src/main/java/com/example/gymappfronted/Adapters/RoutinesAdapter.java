@@ -1,5 +1,6 @@
 package com.example.gymappfronted.Adapters;
 
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.gymappfronted.R;
 import com.example.gymappfronted.Models.RoutineExerciseResponse;
 import com.example.gymappfronted.Models.RoutineResponse;
+import com.example.gymappfronted.RoutineDetailActivity;
 
 import java.util.List;
 
@@ -54,6 +56,16 @@ public class RoutinesAdapter extends RecyclerView.Adapter<RoutinesAdapter.Routin
         }
 
         holder.tvExercises.setText(exercisesBuilder.toString());
+
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), RoutineDetailActivity.class);
+            // Le pasamos el ID y el Nombre a la nueva pantalla
+            intent.putExtra("ROUTINE_ID", routine.getId());
+            intent.putExtra("ROUTINE_NAME", routine.getName());
+
+            // Arrancamos la actividad
+            v.getContext().startActivity(intent);
+        });
     }
 
     @Override
