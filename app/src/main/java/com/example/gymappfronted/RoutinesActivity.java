@@ -44,7 +44,24 @@ public class RoutinesActivity extends AppCompatActivity {
 
         // Botón flotante para cuando programemos la creación de rutinas
         fabAddRoutine.setOnClickListener(v -> {
-            Toast.makeText(RoutinesActivity.this, "¡Próximamente: Crear Rutina!", Toast.LENGTH_SHORT).show();
+            final android.widget.EditText etRoutineName = new android.widget.EditText(this);
+            etRoutineName.setHint("Ej: Rutina de Empuje, Pierna...");
+            etRoutineName.setPadding(50, 40, 50, 40); // Un poco de espacio elegante
+
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("Nueva Rutina")
+                    .setMessage("Escribe el nombre para tu rutina de entrenamiento:")
+                    .setView(etRoutineName)
+                    .setPositiveButton("Crear", (dialog, which) -> {
+                        String name = etRoutineName.getText().toString().trim();
+                        if (!name.isEmpty()) {
+                            createNewRoutineInBackend(name);
+                        } else {
+                            Toast.makeText(this, "El nombre no puede estar vacío", Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .setNegativeButton("Cancelar", null)
+                    .show();
         });
 
         loadRoutines();
@@ -62,7 +79,7 @@ public class RoutinesActivity extends AppCompatActivity {
             return;
         }
 
-        // Importante: Django exige el prefijo "Token " en la cabecera
+        //Django exige el prefijo "Token " en la cabecera
         String authHeader = "Token " + token;
 
         ApiService apiService = RetrofitClient.getClient().create(ApiService.class);
@@ -82,6 +99,34 @@ public class RoutinesActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<List<RoutineResponse>> call, Throwable t) {
                 Toast.makeText(RoutinesActivity.this, "Error de red: " + t.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+    private void createNewRoutineInBackend(String routineName) {
+        SharedPreferences preferences = getSharedPreferences("GymAppPrefs", MODE_PRIVATE);
+        String token = preferences.getString("token", null);
+
+        if (token == null) return;
+
+        String authHeader = "Token " + token;
+        ApiService apiService = RetrofitClient.getClient().create(ApiService.class);
+
+        RoutineResponse newRoutine = new RoutineResponse(routineName);
+
+        apiService.createRoutine(authHeader, newRoutine).enqueue(new Callback<RoutineResponse>() {
+            @Override
+            public void onResponse(Call<RoutineResponse> call, Response<RoutineResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Toast.makeText(RoutinesActivity.this, "¡Rutina creada con éxito!", Toast.LENGTH_SHORT).show();
+                    loadRoutines(); //Recargamos la lista automáticamente
+                } else {
+                    Toast.makeText(RoutinesActivity.this, "Error al crear rutina: " + response.code(), Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<RoutineResponse> call, Throwable t) {
+                Toast.makeText(RoutinesActivity.this, "Error de red: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }

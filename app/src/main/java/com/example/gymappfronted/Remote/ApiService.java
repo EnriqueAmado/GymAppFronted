@@ -23,4 +23,7 @@ public interface ApiService {
 
     @GET("api/routines/")
     Call<List<RoutineResponse>> getUserRoutines(@Header("Authorization") String token);
+
+    @POST("api/routines/")
+    Call<RoutineResponse> createRoutine(@Header("Authorization") String token, @Body RoutineResponse newRoutine);
 }

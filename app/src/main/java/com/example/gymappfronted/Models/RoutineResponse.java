@@ -8,6 +8,10 @@ public class RoutineResponse {
     private String created_at;
     private List<RoutineExerciseResponse> exercises;
 
+    public RoutineResponse(String name) {
+        this.name = name;
+    }
+
     // Getters
     public int getId() { return id; }
     public String getName() { return name; }
