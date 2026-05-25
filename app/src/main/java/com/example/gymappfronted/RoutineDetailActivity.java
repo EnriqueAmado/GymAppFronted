@@ -1,11 +1,32 @@
 package com.example.gymappfronted;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.gymappfronted.Models.Exercise;
+import com.example.gymappfronted.Models.RoutineExerciseRequest;
+import com.example.gymappfronted.Remote.ApiService;
+import com.example.gymappfronted.Remote.RetrofitClient;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class RoutineDetailActivity extends AppCompatActivity {
 
@@ -13,30 +34,135 @@ public class RoutineDetailActivity extends AppCompatActivity {
     private RecyclerView rvExercises;
     private FloatingActionButton fabAddExercise;
     private int routineId;
+    private ApiService apiService;
+    private String token;
+
+    // Lista global para guardar los ejercicios del catálogo que nos dé Django
+    private List<Exercise> catalogExercises = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_routine_detail);
 
-        // Enlazar componentes de la interfaz
+        // Inicializar vistas y Retrofit
         tvRoutineName = findViewById(R.id.tvRoutineName);
         rvExercises = findViewById(R.id.rvExercisesInRoutine);
         fabAddExercise = findViewById(R.id.fabAddExercise);
-
         rvExercises.setLayoutManager(new LinearLayoutManager(this));
 
-        // Recibir el ID y el Nombre de la rutina pulsada
+        apiService = RetrofitClient.getClient().create(ApiService.class);
+
+        // Recuperar el Token guardado en el Login
+        SharedPreferences sharedPreferences = getSharedPreferences("GymAppPrefs", MODE_PRIVATE);
+        token = "Token " + sharedPreferences.getString("token", "");
+
+        // Recibir datos de la pantalla anterior
         if (getIntent().hasExtra("ROUTINE_ID")) {
             routineId = getIntent().getIntExtra("ROUTINE_ID", -1);
             String routineName = getIntent().getStringExtra("ROUTINE_NAME");
-
             tvRoutineName.setText(routineName);
         }
 
-        // Acción del botón flotante para añadir ejercicios
-        fabAddExercise.setOnClickListener(v -> {
+        // Cargar el catálogo de ejercicios de Django para tenerlo listo
+        loadExerciseCatalog();
 
+        // Acción del botón flotante para añadir ejercicios
+        fabAddExercise.setOnClickListener(v -> showAddExerciseDialog());
+    }
+
+    // Trae los ejercicios existentes de la base de datos
+    private void loadExerciseCatalog() {
+        apiService.getExercises().enqueue(new Callback<List<Exercise>>() {
+            @Override
+            public void onResponse(Call<List<Exercise>> call, Response<List<Exercise>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    catalogExercises = response.body();
+                } else {
+                    Toast.makeText(RoutineDetailActivity.this, "Error al cargar catálogo", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<Exercise>> call, Throwable t) {
+                Toast.makeText(RoutineDetailActivity.this, "Fallo de red", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    // Despliega el formulario flotante
+    private void showAddExerciseDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_add_exercise, null);
+        builder.setView(dialogView);
+
+        // Enlazar los campos del XML del diálogo
+        Spinner spinner = dialogView.findViewById(R.id.spinnerExercises);
+        EditText etSets = dialogView.findViewById(R.id.etSets);
+        EditText etReps = dialogView.findViewById(R.id.etReps);
+        EditText etOrder = dialogView.findViewById(R.id.etOrder);
+
+        // Meter los nombres de los ejercicios en el Spinner (Desplegable)
+        List<String> exerciseNames = new ArrayList<>();
+        for (Exercise ex : catalogExercises) {
+            exerciseNames.add(ex.getName()); // Asume que tu modelo Exercise tiene getName()
+        }
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, exerciseNames);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+
+        // Configurar botones del diálogo
+        builder.setPositiveButton("Guardar", (dialog, which) -> {
+            if (catalogExercises.isEmpty() || spinner.getSelectedItem() == null) {
+                Toast.makeText(this, "No hay ejercicio seleccionado", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Obtener el ejercicio seleccionado y sus datos
+            int selectedPosition = spinner.getSelectedItemPosition();
+            Exercise selectedExercise = catalogExercises.get(selectedPosition);
+
+            int sets = Integer.parseInt(etSets.getText().toString().trim());
+            int reps = Integer.parseInt(etReps.getText().toString().trim());
+            int order = Integer.parseInt(etOrder.getText().toString().trim());
+
+            // Crear el objeto Request que irá a Django
+            RoutineExerciseRequest request = new RoutineExerciseRequest(
+                    routineId,
+                    selectedExercise.getId(), // Asume que tu modelo Exercise tiene getId()
+                    sets,
+                    reps,
+                    order
+            );
+
+            // Enviar el POST a Django
+            sendExerciseToBackend(request);
+        });
+
+        builder.setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss());
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    // Envía el ejercicio asignado a Django
+    private void sendExerciseToBackend(RoutineExerciseRequest request) {
+        apiService.addExerciseToRoutine(token, request).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(RoutineDetailActivity.this, "¡Ejercicio añadido!", Toast.LENGTH_SHORT).show();
+                    // Aquí mañana refrescaremos la lista para que se vea en pantalla
+                } else {
+                    Toast.makeText(RoutineDetailActivity.this, "Error de servidor: " + response.code(), Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(RoutineDetailActivity.this, "Fallo de conexión", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 }

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Añadir Ejercicio a la Rutina"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Selecciona el ejercicio:"
+        android:textStyle="bold"/>
+    <Spinner
+        android:id="@+id/spinnerExercises"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="48dp"
+        android:layout_marginBottom="16dp"/>
+
+    <EditText
+        android:id="@+id/etSets"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Número de series (ej: 4)"
+        android:inputType="number"
+        android:minHeight="48dp"
+        android:layout_marginBottom="12dp"/>
+
+    <EditText
+        android:id="@+id/etReps"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Repeticiones (ej: 12)"
+        android:inputType="number"
+        android:minHeight="48dp"
+        android:layout_marginBottom="12dp"/>
+
+    <EditText
+        android:id="@+id/etOrder"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Orden en la rutina (ej: 1)"
+        android:inputType="number"
+        android:minHeight="48dp"/>
+
+</LinearLayout>

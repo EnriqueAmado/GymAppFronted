@@ -3,6 +3,7 @@ import com.example.gymappfronted.Models.AuthResponse;
 import com.example.gymappfronted.Models.Exercise;
 import com.example.gymappfronted.Models.LoginRequest;
 import com.example.gymappfronted.Models.RegisterRequest;
+import com.example.gymappfronted.Models.RoutineExerciseRequest;
 import com.example.gymappfronted.Models.RoutineResponse;
 
 import java.util.List;
@@ -26,4 +27,7 @@ public interface ApiService {
 
     @POST("api/routines/")
     Call<RoutineResponse> createRoutine(@Header("Authorization") String token, @Body RoutineResponse newRoutine);
+
+    @POST("api/routine-exercises/")
+    Call<Void> addExerciseToRoutine(@Header("Authorization") String token, @Body RoutineExerciseRequest request);
 }
