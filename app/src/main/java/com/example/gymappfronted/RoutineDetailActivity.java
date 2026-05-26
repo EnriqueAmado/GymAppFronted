@@ -119,6 +119,17 @@ public class RoutineDetailActivity extends AppCompatActivity {
                 return;
             }
 
+            // Impide que se cierre la app si queda algo vacío
+
+            String strSets = etSets.getText().toString().trim();
+            String strReps = etReps.getText().toString().trim();
+            String strOrder = etOrder.getText().toString().trim();
+
+            if (strSets.isEmpty() || strReps.isEmpty() || strOrder.isEmpty()) {
+                Toast.makeText(this, "Por favor, completa todos los campos numéricos", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             // Obtener el ejercicio seleccionado y sus datos
             int selectedPosition = spinner.getSelectedItemPosition();
             Exercise selectedExercise = catalogExercises.get(selectedPosition);
@@ -153,7 +164,6 @@ public class RoutineDetailActivity extends AppCompatActivity {
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (response.isSuccessful()) {
                     Toast.makeText(RoutineDetailActivity.this, "¡Ejercicio añadido!", Toast.LENGTH_SHORT).show();
-                    // Aquí mañana refrescaremos la lista para que se vea en pantalla
                 } else {
                     Toast.makeText(RoutineDetailActivity.this, "Error de servidor: " + response.code(), Toast.LENGTH_SHORT).show();
                 }
