@@ -5,6 +5,7 @@ import com.example.gymappfronted.Models.LoginRequest;
 import com.example.gymappfronted.Models.RegisterRequest;
 import com.example.gymappfronted.Models.RoutineExerciseRequest;
 import com.example.gymappfronted.Models.RoutineResponse;
+import com.example.gymappfronted.Models.WorkoutLogRequest;
 
 import java.util.List;
 import retrofit2.Call;
@@ -30,4 +31,7 @@ public interface ApiService {
 
     @POST("api/routine-exercises/")
     Call<Void> addExerciseToRoutine(@Header("Authorization") String token, @Body RoutineExerciseRequest request);
+
+    @POST("api/workout-logs/")
+    Call<Void> saveWorkoutLog(@Header("Authorization") String token, @Body WorkoutLogRequest request);
 }

@@ -14,9 +14,15 @@ import com.example.gymappfronted.R;
 public class RoutineExercisesAdapter extends RecyclerView.Adapter<RoutineExercisesAdapter.ViewHolder> {
 
     private List<RoutineExerciseResponse> exerciseList;
+    private OnExerciseClickListener clickListener;
 
-    public RoutineExercisesAdapter(List<RoutineExerciseResponse> exerciseList) {
+    public interface OnExerciseClickListener {
+        void onExerciseClick(RoutineExerciseResponse exercise);
+    }
+
+    public RoutineExercisesAdapter(List<RoutineExerciseResponse> exerciseList, OnExerciseClickListener clickListener) {
         this.exerciseList = exerciseList;
+        this.clickListener = clickListener;
     }
 
     public void setExercises(List<RoutineExerciseResponse> newList) {
@@ -38,6 +44,12 @@ public class RoutineExercisesAdapter extends RecyclerView.Adapter<RoutineExercis
         holder.tvName.setText(item.getExerciseName());
         holder.tvOrder.setText("Orden: " + item.getOrder());
         holder.tvSetsReps.setText(item.getSets() + " x " + item.getReps());
+
+        holder.itemView.setOnClickListener(v -> {
+            if (clickListener != null) {
+                clickListener.onExerciseClick(item);
+            }
+        });
     }
 
     @Override

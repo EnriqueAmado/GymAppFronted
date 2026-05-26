@@ -1,5 +1,6 @@
 package com.example.gymappfronted;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -70,7 +71,20 @@ public class RoutineDetailActivity extends AppCompatActivity {
             tvRoutineName.setText(routineName);
         }
 
-        adapter = new RoutineExercisesAdapter(routineExercisesList);
+        adapter = new RoutineExercisesAdapter(routineExercisesList, new RoutineExercisesAdapter.OnExerciseClickListener() {
+            @Override
+            public void onExerciseClick(RoutineExerciseResponse exercise) {
+                // Al pulsar en el ejercicio, viajamos a la nueva pantalla de Logs
+                Intent intent = new Intent(RoutineDetailActivity.this, WorkoutLogActivity.class);
+
+                // Pasamos el ID de la relación y el nombre asegurando los métodos del modelo
+                intent.putExtra("ROUTINE_EXERCISE_ID", exercise.getId());
+                intent.putExtra("EXERCISE_NAME", exercise.getExerciseName());
+
+                startActivity(intent);
+            }
+        });
+
         rvExercises.setAdapter(adapter);
 
         // Cargar el catálogo de ejercicios de Django para tenerlo listo
