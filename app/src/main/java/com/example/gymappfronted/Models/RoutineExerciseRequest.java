@@ -14,4 +14,24 @@ public class RoutineExerciseRequest {
         this.reps = reps;
         this.order = order;
     }
+
+    public int getRoutineId() {
+        return routine;
+    }
+
+    public int getExerciseId() {
+        return exercise;
+    }
+
+    public int getSets() {
+        return sets;
+    }
+
+    public int getReps() {
+        return reps;
+    }
+
+    public int getOrder() {
+        return order;
+    }
 }

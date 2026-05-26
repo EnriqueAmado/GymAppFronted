@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="6dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvExerciseName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Press de Banca"
+                android:textStyle="bold"
+                android:textColor="#1E293B"
+                android:textSize="16sp"/>
+
+            <TextView
+                android:id="@+id/tvExerciseOrder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Orden: 1"
+                android:textColor="#64748B"
+                android:textSize="12sp"
+                android:layout_marginTop="2dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#EFF6FF"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="6dp"
+            android:backgroundTint="@null"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/tvSetsReps"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="4 x 12"
+                android:textStyle="bold"
+                android:textColor="#2563EB"
+                android:textSize="14sp"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

@@ -15,8 +15,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.gymappfronted.Adapters.RoutineExercisesAdapter;
 import com.example.gymappfronted.Models.Exercise;
 import com.example.gymappfronted.Models.RoutineExerciseRequest;
+import com.example.gymappfronted.Models.RoutineExerciseResponse;
+import com.example.gymappfronted.Models.RoutineResponse;
 import com.example.gymappfronted.Remote.ApiService;
 import com.example.gymappfronted.Remote.RetrofitClient;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -39,6 +42,9 @@ public class RoutineDetailActivity extends AppCompatActivity {
 
     // Lista global para guardar los ejercicios del catálogo que nos dé Django
     private List<Exercise> catalogExercises = new ArrayList<>();
+
+    private RoutineExercisesAdapter adapter;
+    private List<RoutineExerciseResponse> routineExercisesList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,11 +70,16 @@ public class RoutineDetailActivity extends AppCompatActivity {
             tvRoutineName.setText(routineName);
         }
 
+        adapter = new RoutineExercisesAdapter(routineExercisesList);
+        rvExercises.setAdapter(adapter);
+
         // Cargar el catálogo de ejercicios de Django para tenerlo listo
         loadExerciseCatalog();
 
         // Acción del botón flotante para añadir ejercicios
         fabAddExercise.setOnClickListener(v -> showAddExerciseDialog());
+
+        loadRoutineExercises();
     }
 
     // Trae los ejercicios existentes de la base de datos
@@ -164,6 +175,8 @@ public class RoutineDetailActivity extends AppCompatActivity {
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (response.isSuccessful()) {
                     Toast.makeText(RoutineDetailActivity.this, "¡Ejercicio añadido!", Toast.LENGTH_SHORT).show();
+                    loadRoutineExercises();
+
                 } else {
                     Toast.makeText(RoutineDetailActivity.this, "Error de servidor: " + response.code(), Toast.LENGTH_SHORT).show();
                 }
@@ -172,6 +185,36 @@ public class RoutineDetailActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
                 Toast.makeText(RoutineDetailActivity.this, "Fallo de conexión", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void loadRoutineExercises() {
+        apiService.getUserRoutines(token).enqueue(new Callback<List<RoutineResponse>>() {
+            @Override
+            public void onResponse(Call<List<RoutineResponse>> call, Response<List<RoutineResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<RoutineResponse> allRoutines = response.body();
+
+                    // Buscamos la rutina actual por su ID
+                    for (RoutineResponse routine : allRoutines) {
+                        if (routine.getId() == routineId) {
+                            if (routine.getExercises() != null) {
+                                // Guardamos la lista de respuestas con los nombres mapeados
+                                routineExercisesList = routine.getExercises();
+                                adapter.setExercises(routineExercisesList);
+                            }
+                            break;
+                        }
+                    }
+                } else {
+                    Toast.makeText(RoutineDetailActivity.this, "Error al refrescar lista", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<RoutineResponse>> call, Throwable t) {
+                Toast.makeText(RoutineDetailActivity.this, "Fallo de red al actualizar", Toast.LENGTH_SHORT).show();
             }
         });
     }

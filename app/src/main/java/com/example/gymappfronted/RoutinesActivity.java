@@ -101,6 +101,7 @@ public class RoutinesActivity extends AppCompatActivity {
                 Toast.makeText(RoutinesActivity.this, "Error de red: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
+
     }
     private void createNewRoutineInBackend(String routineName) {
         SharedPreferences preferences = getSharedPreferences("GymAppPrefs", MODE_PRIVATE);
@@ -129,5 +130,10 @@ public class RoutinesActivity extends AppCompatActivity {
                 Toast.makeText(RoutinesActivity.this, "Error de red: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadRoutines();
     }
 }
