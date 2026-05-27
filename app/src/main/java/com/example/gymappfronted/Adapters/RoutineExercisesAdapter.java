@@ -3,6 +3,7 @@ package com.example.gymappfronted.Adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -18,6 +19,7 @@ public class RoutineExercisesAdapter extends RecyclerView.Adapter<RoutineExercis
 
     public interface OnExerciseClickListener {
         void onExerciseClick(RoutineExerciseResponse exercise);
+        void onDeleteClick(RoutineExerciseResponse exercise, int position);
     }
 
     public RoutineExercisesAdapter(List<RoutineExerciseResponse> exerciseList, OnExerciseClickListener clickListener) {
@@ -50,6 +52,12 @@ public class RoutineExercisesAdapter extends RecyclerView.Adapter<RoutineExercis
                 clickListener.onExerciseClick(item);
             }
         });
+
+        holder.btnDelete.setOnClickListener(v -> {
+            if (clickListener != null) {
+                clickListener.onDeleteClick(item, position);
+            }
+        });
     }
 
     @Override
@@ -59,12 +67,14 @@ public class RoutineExercisesAdapter extends RecyclerView.Adapter<RoutineExercis
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvName, tvOrder, tvSetsReps;
+        ImageView btnDelete;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             tvName = itemView.findViewById(R.id.tvExerciseName);
             tvOrder = itemView.findViewById(R.id.tvExerciseOrder);
             tvSetsReps = itemView.findViewById(R.id.tvSetsReps);
+            btnDelete = itemView.findViewById(R.id.btnDeleteExercise);
         }
     }
 }

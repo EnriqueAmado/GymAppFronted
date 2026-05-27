@@ -10,9 +10,11 @@ import com.example.gymappfronted.Models.WorkoutLogRequest;
 import java.util.List;
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
 import retrofit2.http.POST;
+import retrofit2.http.Path;
 
 public interface ApiService {
     @GET("api/exercises/") // La ruta que creamos en Django
@@ -34,4 +36,10 @@ public interface ApiService {
 
     @POST("api/workout-logs/")
     Call<Void> saveWorkoutLog(@Header("Authorization") String token, @Body WorkoutLogRequest request);
+
+    @DELETE("api/routines/{id}/delete/")
+    Call<Void> deleteRoutine(@Header("Authorization") String token, @Path("id") int id);
+
+    @DELETE("api/routine-exercises/{id}/delete/")
+    Call<Void> deleteExercise(@Header("Authorization") String token, @Path("id") int id);
 }

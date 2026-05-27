@@ -83,6 +83,18 @@ public class RoutineDetailActivity extends AppCompatActivity {
 
                 startActivity(intent);
             }
+
+            @Override
+            public void onDeleteClick(RoutineExerciseResponse exercise, int position) {
+                new AlertDialog.Builder(RoutineDetailActivity.this)
+                        .setTitle("¿Eliminar ejercicio?")
+                        .setMessage("¿Estás seguro de que quieres eliminar " + exercise.getExerciseName() + " de esta rutina?")
+                        .setPositiveButton("Eliminar", (dialog, which) -> {
+                            deleteExerciseFromRoutine(exercise.getId(), position);
+                        })
+                        .setNegativeButton("Cancelar", null)
+                        .show();
+            }
         });
 
         rvExercises.setAdapter(adapter);
@@ -199,6 +211,27 @@ public class RoutineDetailActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
                 Toast.makeText(RoutineDetailActivity.this, "Fallo de conexión", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void deleteExerciseFromRoutine(int exerciseId, int position) {
+        apiService.deleteExercise(token, exerciseId).enqueue(new Callback<>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(RoutineDetailActivity.this, "Ejercicio eliminado", Toast.LENGTH_SHORT).show();
+                    routineExercisesList.remove(position);
+                    adapter.notifyItemRemoved(position);
+                    adapter.notifyItemRangeChanged(position, routineExercisesList.size());
+                } else {
+                    Toast.makeText(RoutineDetailActivity.this, "Error al eliminar ejercicio", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(RoutineDetailActivity.this, "Fallo de red", Toast.LENGTH_SHORT).show();
             }
         });
     }
