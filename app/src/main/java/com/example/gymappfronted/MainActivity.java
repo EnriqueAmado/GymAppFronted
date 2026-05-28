@@ -1,81 +1,82 @@
 package com.example.gymappfronted;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
+import android.view.View;
+import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.appcompat.widget.Toolbar;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
+import androidx.navigation.ui.AppBarConfiguration;
+import androidx.navigation.ui.NavigationUI;
 
-import com.example.gymappfronted.Adapters.ExerciseAdapter;
-import com.example.gymappfronted.Models.Exercise;
-import com.example.gymappfronted.Remote.ApiService;
-import com.example.gymappfronted.Remote.RetrofitClient;
-
-import java.util.List;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+import com.google.android.material.navigation.NavigationView;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String TAG = "GYM_PROGRESS_LOG";
-
-    private RecyclerView recyclerView;
-    private ExerciseAdapter adapter;
+    private AppBarConfiguration mAppBarConfiguration;
+    private DrawerLayout drawer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
-        recyclerView = findViewById(R.id.rvExercises);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
-        // Configuración de los bordes de pantalla (UI)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
+        drawer = findViewById(R.id.drawer_layout);
+        NavigationView navigationView = findViewById(R.id.nav_view);
 
-        //Lanzamos lógica de red
-        fetchExercises();
+        // Configuración de la navegación lateral
+        mAppBarConfiguration = new AppBarConfiguration.Builder(
+                R.id.nav_routines, R.id.nav_progress, R.id.nav_catalog, R.id.nav_account)
+                .setOpenableLayout(drawer)
+                .build();
+
+        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
+        NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
+        NavigationUI.setupWithNavController(navigationView, navController);
+
+        // Lógica para la cabecera dinámica y cerrar sesión
+        setupNavHeader(navigationView);
+        setupLogout(navigationView);
     }
 
-    private void fetchExercises() {
-        //Instanciamos el servicio
-        ApiService apiService = RetrofitClient.getClient().create(ApiService.class);
+    private void setupNavHeader(NavigationView navigationView) {
+        View headerView = navigationView.getHeaderView(0);
+        TextView tvName = headerView.findViewById(R.id.tvNavHeaderName);
+        TextView tvEmail = headerView.findViewById(R.id.tvNavHeaderEmail);
 
-        //Preparamos la llamada
-        Call<List<Exercise>> call = apiService.getExercises();
+        SharedPreferences prefs = getSharedPreferences("GymAppPrefs", MODE_PRIVATE);
+        String username = prefs.getString("username", "Usuario");
+        String email = prefs.getString("email", "usuario@correo.com"); // Ajusta si guardas el email en login
 
-        //Ejecución
-        call.enqueue(new Callback<List<Exercise>>() {
-            @Override
-            public void onResponse(Call<List<Exercise>> call, Response<List<Exercise>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    List<Exercise> exercises = response.body();
-                    Log.d(TAG, "¡Éxito! Recibidos " + exercises.size() + " ejercicios.");
+        tvName.setText("Hola, " + username);
+        tvEmail.setText(email);
+    }
 
-                    adapter = new ExerciseAdapter(exercises);
-                    recyclerView.setAdapter(adapter);
-                } else {
-                    Log.e(TAG, "Error en respuesta: " + response.code());
-                    // Opcional para el futuro: Mostrar un aviso visual al usuario (Toast) de que falló la carga
-                }
-            }
+    private void setupLogout(NavigationView navigationView) {
+        navigationView.getMenu().findItem(R.id.nav_logout).setOnMenuItemClickListener(item -> {
+            SharedPreferences prefs = getSharedPreferences("GymAppPrefs", MODE_PRIVATE);
+            prefs.edit().clear().apply();
 
-            @Override
-            public void onFailure(Call<List<Exercise>> call, Throwable t) {
-                Log.e(TAG, "Fallo de conexión: " + t.getMessage());
-            }
+            Toast.makeText(this, "Sesión cerrada", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(MainActivity.this, LoginActivity.class));
+            finish();
+            return true;
         });
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
+        return NavigationUI.navigateUp(navController, mAppBarConfiguration)
+                || super.onSupportNavigateUp();
     }
 }

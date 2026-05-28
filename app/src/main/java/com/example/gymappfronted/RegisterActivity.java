@@ -67,12 +67,13 @@ public class RegisterActivity extends AppCompatActivity {
                     SharedPreferences.Editor editor = preferences.edit();
                     editor.putString("token", response.body().getToken());
                     editor.putString("username", response.body().getUsername());
+                    editor.putString("email", email); // Guardamos el email para el NavHeader
                     editor.apply();
 
                     Toast.makeText(RegisterActivity.this, "¡Registro completado con éxito!", Toast.LENGTH_SHORT).show();
 
                     // Saltamos al catálogo de ejercicios
-                    Intent intent = new Intent(RegisterActivity.this, RoutinesActivity.class);
+                    Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
                     startActivity(intent);
                     finish();
                 } else {

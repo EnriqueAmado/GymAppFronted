@@ -34,7 +34,7 @@ public class LoginActivity extends AppCompatActivity {
         SharedPreferences preferences = getSharedPreferences("GymAppPrefs", MODE_PRIVATE);
         String savedToken = preferences.getString("token", null);
         if (savedToken != null) {
-            startActivity(new Intent(LoginActivity.this, RoutinesActivity.class));
+            startActivity(new Intent(LoginActivity.this, MainActivity.class));
             finish();
             return;
         }
@@ -80,7 +80,7 @@ public class LoginActivity extends AppCompatActivity {
                     Toast.makeText(LoginActivity.this, "¡Bienvenido de nuevo!", Toast.LENGTH_SHORT).show();
 
                     // Saltamos a la pantalla principal
-                    startActivity(new Intent(LoginActivity.this, RoutinesActivity.class));
+                    startActivity(new Intent(LoginActivity.this, MainActivity.class));
                     finish();
                 } else {
                     Toast.makeText(LoginActivity.this, "Credenciales incorrectas", Toast.LENGTH_SHORT).show();
