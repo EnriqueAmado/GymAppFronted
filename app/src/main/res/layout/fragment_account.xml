@@ -30,4 +30,19 @@
         android:text="Email: "
         android:textColor="#FFFFFF" />
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginVertical="20dp"
+        android:background="#333333" />
+
+    <TextView
+        android:id="@+id/tvTotalWorkouts"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Total de series registradas: Carga..."
+        android:textColor="#6DAF4C"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
 </LinearLayout>
