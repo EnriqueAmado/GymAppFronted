@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/nav_routines">
+
+    <fragment
+        android:id="@+id/nav_routines"
+        android:name="com.example.gymappfronted.Fragments.RoutinesFragment"
+        android:label="Mis Rutinas"
+        tools:layout="@layout/fragment_routines" />
+
+    <fragment
+        android:id="@+id/nav_progress"
+        android:name="com.example.gymappfronted.Fragments.ProgressFragment"
+        android:label="Mi Progreso"
+        tools:layout="@layout/fragment_progress" />
+
+    <fragment
+        android:id="@+id/nav_catalog"
+        android:name="com.example.gymappfronted.Fragments.CatalogFragment"
+        android:label="Catálogo de Ejercicios"
+        tools:layout="@layout/fragment_catalog" />
+
+    <fragment
+        android:id="@+id/nav_account"
+        android:name="com.example.gymappfronted.Fragments.AccountFragment"
+        android:label="Mi Cuenta"
+        tools:layout="@layout/fragment_account" />
+</navigation>
