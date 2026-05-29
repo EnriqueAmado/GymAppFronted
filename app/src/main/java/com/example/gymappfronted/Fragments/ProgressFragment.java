@@ -180,7 +180,6 @@ public class ProgressFragment extends Fragment {
             if (fechaLog == null || fechaLog.isEmpty()) {
                 fechas.add("S/F"); // "Sin Fecha" si viniera nulo, para que no rompa
             } else {
-                // Si la fecha viene muy larga (con hora), nos quedamos solo con los primeros 10 caracteres (YYYY-MM-DD)
                 if (fechaLog.length() > 10) {
                     fechaLog = fechaLog.substring(0, 10);
                 }
@@ -197,7 +196,20 @@ public class ProgressFragment extends Fragment {
         dataSet.setValueTextColor(Color.WHITE);
         dataSet.setValueTextSize(10f);
 
-        lineChart.getXAxis().setValueFormatter(new ValueFormatter() {
+        // Diseño de los números encima de los puntos
+        dataSet.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                return value + " kg"; // Añade la unidad "kg" directamente en la gráfica
+            }
+        });
+
+        // CONFIGURACIÓN DEL EJE X (FECHAS)
+        com.github.mikephil.charting.components.XAxis xAxis = lineChart.getXAxis();
+        xAxis.setTextColor(Color.WHITE);
+        xAxis.setGranularity(1f);
+        xAxis.setLabelRotationAngle(-45f); //  Rota las fechas -45 grados para que no se pisen entre ellas
+        xAxis.setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
                 int index = Math.round(value);
@@ -208,8 +220,30 @@ public class ProgressFragment extends Fragment {
             }
         });
 
+        //Interactividad total para ver las repeticiones al pulsar el punto
+        lineChart.setOnChartValueSelectedListener(new com.github.mikephil.charting.listener.OnChartValueSelectedListener() {
+            @Override
+            public void onValueSelected(Entry e, com.github.mikephil.charting.highlight.Highlight h) {
+                int index = Math.round(e.getX());
+                if (index >= 0 && index < logs.size()) {
+                    WorkoutLogResponse selectedLog = logs.get(index);
+
+                    // Construimos el mensaje completo con la fecha, peso y repeticiones reales
+                    String info = "📅 " + fechas.get(index) + "\n" +
+                            "💪 Peso: " + selectedLog.getWeight() + " kg\n" +
+                            "🔁 Repeticiones: " + selectedLog.getReps();
+
+                    Toast.makeText(getContext(), info, Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onNothingSelected() {}
+        });
+
         LineData lineData = new LineData(dataSet);
         lineChart.setData(lineData);
+        lineChart.setExtraBottomOffset(20f);
         lineChart.animateX(800);
         lineChart.invalidate();
     }
