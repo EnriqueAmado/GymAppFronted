@@ -31,6 +31,7 @@ public class WorkoutLogActivity extends AppCompatActivity {
     private RecyclerView rvLogs;
 
     private int routineExerciseId;
+    private int targetSets = 0;
     private String token;
     private ApiService apiService;
 
@@ -61,6 +62,8 @@ public class WorkoutLogActivity extends AppCompatActivity {
             routineExerciseId = getIntent().getIntExtra("ROUTINE_EXERCISE_ID", -1);
             String exerciseName = getIntent().getStringExtra("EXERCISE_NAME");
             tvExerciseName.setText(exerciseName);
+
+            targetSets = getIntent().getIntExtra("TARGET_SETS", 4);
         }
 
         // Inicializar el adaptador de las series
@@ -68,7 +71,15 @@ public class WorkoutLogActivity extends AppCompatActivity {
         rvLogs.setAdapter(adapter);
 
         // Acción del botón para guardar la serie
-        btnSaveSet.setOnClickListener(v -> saveSetToBackend());
+        btnSaveSet.setOnClickListener(v -> {
+
+            if (adapter.getItemCount() < targetSets) {
+                saveSetToBackend();
+            } else {
+                // Alerta al usuario de que ha cumplido el objetivo de la rutina
+             Toast.makeText(this, "¡Objetivo cumplido! Ya has registrado las " + targetSets + " series programadas.", Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void saveSetToBackend() {

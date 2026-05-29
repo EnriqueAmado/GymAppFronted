@@ -81,6 +81,8 @@ public class RoutineDetailActivity extends AppCompatActivity {
                 intent.putExtra("ROUTINE_EXERCISE_ID", exercise.getId());
                 intent.putExtra("EXERCISE_NAME", exercise.getExerciseName());
 
+                intent.putExtra("TARGET_SETS", exercise.getSets());
+
                 startActivity(intent);
             }
 
