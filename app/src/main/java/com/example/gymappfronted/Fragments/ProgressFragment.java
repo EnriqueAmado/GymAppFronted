@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,6 +27,7 @@ import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,9 +41,9 @@ public class ProgressFragment extends Fragment {
     private Spinner spinnerExercises;
     private LineChart lineChart;
     private TextView tvNoData;
-    private List<WorkoutLogResponse> allLogs = new ArrayList<>();
     private List<Exercise> catalogExercises = new ArrayList<>();
     private String token;
+    private ApiService apiService;
 
     @Nullable
     @Override
@@ -52,17 +54,32 @@ public class ProgressFragment extends Fragment {
         lineChart = view.findViewById(R.id.lineChart);
         tvNoData = view.findViewById(R.id.tvNoData);
 
-        SharedPreferences prefs = getActivity().getSharedPreferences("GymAppPrefs", Context.MODE_PRIVATE);
-        token = "Token " + prefs.getString("token", "");
+        apiService = RetrofitClient.getApiService();
 
-        setupChart();
-        loadCatalogAndLogs();
+        SharedPreferences prefs = getActivity().getSharedPreferences("GymAppPrefs", Context.MODE_PRIVATE);
+        String rawToken = prefs.getString("auth_token", "");
+        if (rawToken.isEmpty()) {
+            rawToken = prefs.getString("token", "");
+        }
+        Log.d("GymProgress_DEBUG", "--- TOKEN RECUPERADO DE PREFS: [" + rawToken + "]");
+
+        token = "Token " + rawToken;
+
+        setupChartStyle();
+        loadExerciseCatalog();
 
         spinnerExercises.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String selectedExercise = catalogExercises.get(position).getName();
-                updateChart(selectedExercise);
+                Log.d("GymProgress_DEBUG", "¡Spinner pulsado! Posición: " + position);
+
+                if (catalogExercises != null && !catalogExercises.isEmpty() && position < catalogExercises.size()) {
+                    Exercise selected = catalogExercises.get(position);
+                    Log.d("GymProgress_DEBUG", "Pidiendo datos para: " + selected.getName() + " (ID: " + selected.getId() + ")");
+                    fetchProgressFromServer(selected.getId(), selected.getName());
+                } else {
+                    Log.d("GymProgress_DEBUG", "La lista de ejercicios del catálogo está vacía o es nula");
+                }
             }
 
             @Override
@@ -72,19 +89,17 @@ public class ProgressFragment extends Fragment {
         return view;
     }
 
-    private void setupChart() {
+    private void setupChartStyle() {
         lineChart.getDescription().setEnabled(false);
-        lineChart.setNoDataText("Cargando datos...");
+        lineChart.setNoDataText("Selecciona un ejercicio para ver tu progreso...");
         lineChart.getAxisRight().setEnabled(false);
         lineChart.getXAxis().setTextColor(Color.WHITE);
         lineChart.getAxisLeft().setTextColor(Color.WHITE);
         lineChart.getLegend().setTextColor(Color.WHITE);
+        lineChart.getXAxis().setGranularity(1f);
     }
 
-    private void loadCatalogAndLogs() {
-        ApiService apiService = RetrofitClient.getApiService();
-
-        // 1. Cargar catálogo de ejercicios
+    private void loadExerciseCatalog() {
         apiService.getExercises().enqueue(new Callback<List<Exercise>>() {
             @Override
             public void onResponse(Call<List<Exercise>> call, Response<List<Exercise>> response) {
@@ -99,65 +114,103 @@ public class ProgressFragment extends Fragment {
                         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                         spinnerExercises.setAdapter(adapter);
                     }
-                    
-                    // 2. Una vez tenemos el catálogo, cargamos los logs
-                    fetchLogs();
                 }
             }
 
             @Override
             public void onFailure(Call<List<Exercise>> call, Throwable t) {
-                if (getContext() != null) Toast.makeText(getContext(), "Error al cargar ejercicios", Toast.LENGTH_SHORT).show();
+                if (getContext() != null) Toast.makeText(getContext(), "Error al conectar con la API", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void fetchLogs() {
-        RetrofitClient.getApiService().getWorkoutLogs(token).enqueue(new Callback<List<WorkoutLogResponse>>() {
+    private void fetchProgressFromServer(int exerciseId, String exerciseName) {
+        Log.d("GymProgress_DEBUG", ">>> Enviando petición HTTP a Django para el ejercicio ID: " + exerciseId);
+        Log.d("GymProgress_DEBUG", "Using Token: " + token);
+
+        apiService.getProgress(token, exerciseId).enqueue(new Callback<List<WorkoutLogResponse>>() {
             @Override
             public void onResponse(Call<List<WorkoutLogResponse>> call, Response<List<WorkoutLogResponse>> response) {
+                Log.d("GymProgress_DEBUG", "<<< Respuesta del servidor recibida. Código de estado HTTP: " + response.code());
+
                 if (response.isSuccessful() && response.body() != null) {
-                    allLogs = response.body();
-                    if (spinnerExercises.getSelectedItem() != null) {
-                        updateChart(spinnerExercises.getSelectedItem().toString());
+                    List<WorkoutLogResponse> logs = response.body();
+                    Log.d("GymProgress_DEBUG", "¡Éxito! Registros devueltos por Django: " + logs.size());
+                    updateChartWithData(logs, exerciseName); // <--- Llamada correcta
+                } else {
+                    Log.e("GymProgress_DEBUG", "Error en el cuerpo de la respuesta. Código HTTP: " + response.code());
+                    try {
+                        if (response.errorBody() != null) {
+                            Log.e("GymProgress_DEBUG", "Detalle del error del servidor: " + response.errorBody().string());
+                        }
+                    } catch (Exception e) {
+                        Log.e("GymProgress_DEBUG", "No se pudo leer el cuerpo del error", e);
                     }
                 }
             }
 
             @Override
             public void onFailure(Call<List<WorkoutLogResponse>> call, Throwable t) {
-                if (getContext() != null) Toast.makeText(getContext(), "Error al cargar logs", Toast.LENGTH_SHORT).show();
+                Log.e("GymProgress_DEBUG", "FALLO CRÍTICO DE RED (Retrofit no llega a Django): " + t.getMessage(), t);
             }
-        });
+        }); // <--- Aquí se cierra correctamente la llamada anónima de Retrofit
     }
 
-    private void updateChart(String exerciseName) {
+    // MÉTODOS DE LA CLASE PRINCIPAL (FUERA DEL CALLBACK)
+    private void updateChartWithData(List<WorkoutLogResponse> logs, String exerciseName) {
+        if (logs == null || logs.isEmpty()) {
+            lineChart.setVisibility(View.GONE);
+            tvNoData.setVisibility(View.VISIBLE);
+            return;
+        }
+
+        lineChart.setVisibility(View.VISIBLE);
+        tvNoData.setVisibility(View.GONE);
+
         List<Entry> entries = new ArrayList<>();
-        int x = 0;
-        for (WorkoutLogResponse log : allLogs) {
-            if (log.getExerciseName() != null && log.getExerciseName().equals(exerciseName)) {
-                entries.add(new Entry(x++, (float) log.getWeight()));
+        final List<String> fechas = new ArrayList<>();
+
+        for (int i = 0; i < logs.size(); i++) {
+            WorkoutLogResponse log = logs.get(i);
+
+            float weight = (float) log.getWeight();
+            entries.add(new Entry(i, weight));
+
+            String fechaLog = log.getCreatedAt();
+            if (fechaLog == null || fechaLog.isEmpty()) {
+                fechas.add("S/F"); // "Sin Fecha" si viniera nulo, para que no rompa
+            } else {
+                // Si la fecha viene muy larga (con hora), nos quedamos solo con los primeros 10 caracteres (YYYY-MM-DD)
+                if (fechaLog.length() > 10) {
+                    fechaLog = fechaLog.substring(0, 10);
+                }
+                fechas.add(log.getCreatedAt());
             }
         }
 
-        if (entries.isEmpty()) {
-            lineChart.setVisibility(View.GONE);
-            tvNoData.setVisibility(View.VISIBLE);
-        } else {
-            lineChart.setVisibility(View.VISIBLE);
-            tvNoData.setVisibility(View.GONE);
+        LineDataSet dataSet = new LineDataSet(entries, "Progreso en " + exerciseName);
+        dataSet.setColor(Color.parseColor("#00E676"));
+        dataSet.setCircleColor(Color.WHITE);
+        dataSet.setLineWidth(3f);
+        dataSet.setCircleRadius(5f);
+        dataSet.setDrawCircleHole(true);
+        dataSet.setValueTextColor(Color.WHITE);
+        dataSet.setValueTextSize(10f);
 
-            LineDataSet dataSet = new LineDataSet(entries, "Peso levantado (kg) en " + exerciseName);
-            dataSet.setColor(Color.GREEN);
-            dataSet.setCircleColor(Color.WHITE);
-            dataSet.setLineWidth(2f);
-            dataSet.setCircleRadius(4f);
-            dataSet.setValueTextColor(Color.WHITE);
-            dataSet.setValueTextSize(10f);
+        lineChart.getXAxis().setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                int index = Math.round(value);
+                if (index >= 0 && index < fechas.size()) {
+                    return fechas.get(index);
+                }
+                return "";
+            }
+        });
 
-            LineData lineData = new LineData(dataSet);
-            lineChart.setData(lineData);
-            lineChart.invalidate(); // Refrescar
-        }
+        LineData lineData = new LineData(dataSet);
+        lineChart.setData(lineData);
+        lineChart.animateX(800);
+        lineChart.invalidate();
     }
 }
