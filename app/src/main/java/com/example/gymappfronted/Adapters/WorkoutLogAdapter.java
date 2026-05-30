@@ -6,18 +6,32 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import com.example.gymappfronted.Models.WorkoutLogRequest;
+import com.example.gymappfronted.Models.WorkoutLogResponse;
 import java.util.List;
 
 public class WorkoutLogAdapter extends RecyclerView.Adapter<WorkoutLogAdapter.ViewHolder> {
 
-    private List<WorkoutLogRequest> logList;
-
-    public WorkoutLogAdapter(List<WorkoutLogRequest> logList) {
-        this.logList = logList;
+    public interface OnLogLongClickListener {
+        void onLogLongClick(WorkoutLogResponse log, int position);
     }
 
-    public void addLog(WorkoutLogRequest newLog) {
+    private List<WorkoutLogResponse> logList;
+    private OnLogLongClickListener longClickListener;
+
+    public WorkoutLogAdapter(List<WorkoutLogResponse> logList, OnLogLongClickListener longClickListener) {
+        this.logList = logList;
+        this.longClickListener = longClickListener;
+    }
+
+    public void removeLog(int position) {
+        if (position >= 0 && position < logList.size()) {
+            logList.remove(position);
+            notifyItemRemoved(position);
+            notifyItemRangeChanged(position, logList.size());
+        }
+    }
+
+    public void addLog(WorkoutLogResponse newLog) {
         this.logList.add(newLog);
         notifyItemInserted(logList.size() - 1);
     }
@@ -32,11 +46,18 @@ public class WorkoutLogAdapter extends RecyclerView.Adapter<WorkoutLogAdapter.Vi
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        WorkoutLogRequest log = logList.get(position);
-        // Pintamos el resumen de la serie (ej: "Serie 1: 80.0 kg x 12 reps")
+        WorkoutLogResponse log = logList.get(position);
         holder.textView.setText("Serie " + (position + 1) + ":   " + log.getWeight() + " kg   x   " + log.getReps() + " reps");
         holder.textView.setTextColor(android.graphics.Color.WHITE);
         holder.textView.setTextSize(16);
+
+        // Detectar pulsación larga para borrar
+        holder.itemView.setOnLongClickListener(v -> {
+            if (longClickListener != null) {
+                longClickListener.onLogLongClick(log, position);
+            }
+            return true;
+        });
     }
 
     @Override

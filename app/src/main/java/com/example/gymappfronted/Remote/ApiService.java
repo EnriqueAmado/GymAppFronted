@@ -47,6 +47,9 @@ public interface ApiService {
     @DELETE("api/routine-exercises/{id}/delete/")
     Call<Void> deleteExercise(@Header("Authorization") String token, @Path("id") int id);
 
+    @DELETE("api/workout-logs/{id}/delete/")
+    Call<Void> deleteWorkoutLog(@Header("Authorization") String token, @Path("id") int id);
+
     @GET("api/progress/{exercise_id}/")
     Call<List<WorkoutLogResponse>> getProgress(@Header("Authorization") String token, @Path("exercise_id") int exerciseId
     );

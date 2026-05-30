@@ -40,7 +40,7 @@ public class WorkoutLogActivity extends AppCompatActivity {
     private ApiService apiService;
 
     private WorkoutLogAdapter adapter;
-    private List<WorkoutLogRequest> logList = new ArrayList<>();
+    private List<WorkoutLogResponse> logList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,8 +78,15 @@ public class WorkoutLogActivity extends AppCompatActivity {
             fetchTodayLogs();
         }
 
-        // Inicializar el adaptador de las series
-        adapter = new WorkoutLogAdapter(logList);
+        // Inicializar el adaptador de las series con pulsación larga para borrar
+        adapter = new WorkoutLogAdapter(logList, (log, position) -> {
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("¿Eliminar serie?")
+                    .setMessage("¿Estás seguro de que quieres borrar este registro?")
+                    .setPositiveButton("Eliminar", (dialog, which) -> deleteLogFromBackend(log.getId(), position))
+                    .setNegativeButton("Cancelar", null)
+                    .show();
+        });
         rvLogs.setAdapter(adapter);
 
         // Acción del botón para guardar la serie
@@ -88,6 +95,25 @@ public class WorkoutLogActivity extends AppCompatActivity {
                 saveSetToBackend();
             } else {
                 Toast.makeText(this, "¡Objetivo cumplido! Ya has registrado las " + targetSets + " series programadas.", Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void deleteLogFromBackend(int logId, int position) {
+        apiService.deleteWorkoutLog(token, logId).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    adapter.removeLog(position);
+                    Toast.makeText(WorkoutLogActivity.this, "Serie eliminada", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(WorkoutLogActivity.this, "Error al borrar: " + response.code(), Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(WorkoutLogActivity.this, "Fallo de conexión", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -111,10 +137,11 @@ public class WorkoutLogActivity extends AppCompatActivity {
                     logList.clear();
                     for (WorkoutLogResponse log : allLogs) {
                         String createdAt = log.getCreatedAt();
+                        // El endpoint de progreso ya filtra por ejercicio, solo filtramos por fecha de hoy
                         String dateKey = (createdAt == null || createdAt.isEmpty()) ? today : createdAt;
 
                         if (dateKey.startsWith(today)) {
-                            logList.add(new WorkoutLogRequest(routineExerciseId, log.getWeight(), log.getReps()));
+                            logList.add(log);
                         }
                     }
                     adapter.notifyDataSetChanged();
@@ -143,22 +170,21 @@ public class WorkoutLogActivity extends AppCompatActivity {
         double weight = Double.parseDouble(strWeight);
         int reps = Integer.parseInt(strReps);
 
-        // Creamos el objeto para enviárselo a Django
         WorkoutLogRequest logRequest = new WorkoutLogRequest(routineExerciseId, weight, reps);
 
-        // ENVIAR A DJANGO POR RETROFIT
         apiService.saveWorkoutLog(token, logRequest).enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (response.isSuccessful()) {
-                    Toast.makeText(WorkoutLogActivity.this, "¡Serie guardada en la base de datos!", Toast.LENGTH_SHORT).show();
-
-                    // Añadimos la serie a la lista de la pantalla al toque y limpiamos los campos
-                    adapter.addLog(logRequest);
+                    Toast.makeText(WorkoutLogActivity.this, "¡Serie guardada!", Toast.LENGTH_SHORT).show();
+                    
+                    // Al guardar, refrescamos para obtener el ID real del servidor
+                    fetchTodayLogs();
+                    
                     etWeight.setText("");
                     etReps.setText("");
                 } else {
-                    Toast.makeText(WorkoutLogActivity.this, "Error del servidor: " + response.code(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(WorkoutLogActivity.this, "Error: " + response.code(), Toast.LENGTH_SHORT).show();
                 }
             }
 
