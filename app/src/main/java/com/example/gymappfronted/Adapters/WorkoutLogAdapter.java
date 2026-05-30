@@ -47,9 +47,18 @@ public class WorkoutLogAdapter extends RecyclerView.Adapter<WorkoutLogAdapter.Vi
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         WorkoutLogResponse log = logList.get(position);
-        holder.textView.setText("Serie " + (position + 1) + ":   " + log.getWeight() + " kg   x   " + log.getReps() + " reps");
+        
+        // Cálculo del 1RM estimado (Fórmula de Epley)
+        double weight = log.getWeight();
+        int reps = log.getReps();
+        double oneRM = weight * (1 + (reps * 0.0333));
+        
+        String text = String.format("Serie %d:  %.1f kg x %d  (1RM: %.1f kg)", 
+                                    (position + 1), weight, reps, oneRM);
+        
+        holder.textView.setText(text);
         holder.textView.setTextColor(android.graphics.Color.WHITE);
-        holder.textView.setTextSize(16);
+        holder.textView.setTextSize(14); // Un pelín más pequeño para que quepa todo
 
         // Detectar pulsación larga para borrar
         holder.itemView.setOnLongClickListener(v -> {

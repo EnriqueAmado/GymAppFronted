@@ -138,17 +138,21 @@ public class WorkoutLogActivity extends AppCompatActivity {
                     logList.clear();
                     String lastDate = "";
                     StringBuilder lastSessionInfo = new StringBuilder();
+                    double max1RM = 0;
 
-                    // Recorremos de atrás hacia adelante para encontrar la última sesión que no sea hoy
                     for (int i = allLogs.size() - 1; i >= 0; i--) {
                         WorkoutLogResponse log = allLogs.get(i);
+                        
+                        // Calculamos el 1RM de este log histórico
+                        double current1RM = log.getWeight() * (1 + (log.getReps() * 0.0333));
+                        if (current1RM > max1RM) max1RM = current1RM;
+
                         String createdAt = log.getCreatedAt();
                         String dateKey = (createdAt == null || createdAt.isEmpty()) ? today : createdAt;
 
                         if (dateKey.startsWith(today)) {
-                            logList.add(0, log); // Añadimos al principio para mantener orden
+                            logList.add(0, log);
                         } else {
-                            // Si encontramos una fecha distinta a hoy, es la última sesión
                             if (lastDate.isEmpty() || lastDate.equals(dateKey)) {
                                 lastDate = dateKey;
                                 lastSessionInfo.append(log.getWeight()).append("kg x ").append(log.getReps()).append(", ");
@@ -159,7 +163,10 @@ public class WorkoutLogActivity extends AppCompatActivity {
                     if (!lastDate.isEmpty()) {
                         String info = lastSessionInfo.toString();
                         if (info.endsWith(", ")) info = info.substring(0, info.length() - 2);
-                        tvLastSession.setText("Última vez (" + lastDate + "): " + info);
+                        
+                        // Añadimos el Récord Personal (PR) al texto
+                        String prText = String.format(" | PR: %.1f kg", max1RM);
+                        tvLastSession.setText("Última vez (" + lastDate + "): " + info + prText);
                     } else {
                         tvLastSession.setText("Primera vez que realizas este ejercicio");
                     }
