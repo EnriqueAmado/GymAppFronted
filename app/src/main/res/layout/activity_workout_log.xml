@@ -16,7 +16,17 @@
         android:textColor="#4CAF50"
         android:textSize="28sp"
         android:textStyle="bold"
-        android:layout_marginBottom="24dp"/>
+        android:layout_marginBottom="4dp"/>
+
+    <TextView
+        android:id="@+id/tvLastSession"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Cargando última sesión..."
+        android:textColor="#B0B0B0"
+        android:textSize="14sp"
+        android:textStyle="italic"
+        android:layout_marginBottom="20dp"/>
 
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
