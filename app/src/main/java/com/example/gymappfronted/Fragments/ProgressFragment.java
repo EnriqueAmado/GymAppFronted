@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
 import com.example.gymappfronted.Models.Exercise;
@@ -28,9 +29,13 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.ValueFormatter;
+import com.github.mikephil.charting.highlight.Highlight;
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -164,30 +169,48 @@ public class ProgressFragment extends Fragment {
             return;
         }
 
+        Log.d("GymProgress_DEBUG", "Actualizando gráfica con " + logs.size() + " logs");
+
         lineChart.setVisibility(View.VISIBLE);
         tvNoData.setVisibility(View.GONE);
 
-        List<Entry> entries = new ArrayList<>();
-        final List<String> fechas = new ArrayList<>();
+        // Agrupamos por fecha (YYYY-MM-DD) para sumar el volumen (peso * reps) de cada día
+        Map<String, DailyProgress> dailyMap = new TreeMap<>();
 
-        for (int i = 0; i < logs.size(); i++) {
-            WorkoutLogResponse log = logs.get(i);
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault());
+        String hoy = sdf.format(new java.util.Date());
 
-            float weight = (float) log.getWeight();
-            entries.add(new Entry(i, weight));
+        for (WorkoutLogResponse log : logs) {
+            String fechaOriginal = log.getCreatedAt();
+            
+            // Si la fecha es null, usamos "hoy" para que no se pierda el dato
+            String dateKey = (fechaOriginal == null || fechaOriginal.isEmpty()) ? hoy : 
+                             (fechaOriginal.length() > 10 ? fechaOriginal.substring(0, 10) : fechaOriginal);
 
-            String fechaLog = log.getCreatedAt();
-            if (fechaLog == null || fechaLog.isEmpty()) {
-                fechas.add("S/F"); // "Sin Fecha" si viniera nulo, para que no rompa
-            } else {
-                if (fechaLog.length() > 10) {
-                    fechaLog = fechaLog.substring(0, 10);
-                }
-                fechas.add(log.getCreatedAt());
+            Log.d("GymProgress_DEBUG", "Procesando log. Fecha usada: " + dateKey + " | Peso: " + log.getWeight());
+
+            DailyProgress dp = dailyMap.get(dateKey);
+            if (dp == null) {
+                dp = new DailyProgress(dateKey);
+                dailyMap.put(dateKey, dp);
             }
+            dp.addSet(log.getWeight(), log.getReps());
         }
 
-        LineDataSet dataSet = new LineDataSet(entries, "Progreso en " + exerciseName);
+        Log.d("GymProgress_DEBUG", "Días agrupados: " + dailyMap.size());
+
+        List<Entry> entries = new ArrayList<>();
+        final List<DailyProgress> dailyList = new ArrayList<>(dailyMap.values());
+        final List<String> fechasLabels = new ArrayList<>();
+
+        for (int i = 0; i < dailyList.size(); i++) {
+            DailyProgress dp = dailyList.get(i);
+            entries.add(new Entry(i, (float) dp.totalVolume));
+            fechasLabels.add(dp.date);
+            Log.d("GymProgress_DEBUG", "Entry añadido: X=" + i + ", Y=" + dp.totalVolume + " (" + dp.date + ")");
+        }
+
+        LineDataSet dataSet = new LineDataSet(entries, "Volumen Total (kg) en " + exerciseName);
         dataSet.setColor(Color.parseColor("#00E676"));
         dataSet.setCircleColor(Color.WHITE);
         dataSet.setLineWidth(3f);
@@ -200,40 +223,35 @@ public class ProgressFragment extends Fragment {
         dataSet.setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
-                return value + " kg"; // Añade la unidad "kg" directamente en la gráfica
+                return value + " kg";
             }
         });
 
         // CONFIGURACIÓN DEL EJE X (FECHAS)
         com.github.mikephil.charting.components.XAxis xAxis = lineChart.getXAxis();
         xAxis.setTextColor(Color.WHITE);
-        xAxis.setGranularity(1f);
-        xAxis.setLabelRotationAngle(-45f); //  Rota las fechas -45 grados para que no se pisen entre ellas
+        xAxis.setGranularity(1f); // Asegura que se muestre una etiqueta por cada punto
+        xAxis.setLabelRotationAngle(-45f);
+        xAxis.setPosition(com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM);
         xAxis.setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
                 int index = Math.round(value);
-                if (index >= 0 && index < fechas.size()) {
-                    return fechas.get(index);
+                if (index >= 0 && index < fechasLabels.size()) {
+                    return fechasLabels.get(index);
                 }
                 return "";
             }
         });
 
-        //Interactividad total para ver las repeticiones al pulsar el punto
-        lineChart.setOnChartValueSelectedListener(new com.github.mikephil.charting.listener.OnChartValueSelectedListener() {
+        // Interactividad para mostrar detalles de las series al pulsar el punto
+        lineChart.setOnChartValueSelectedListener(new OnChartValueSelectedListener() {
             @Override
-            public void onValueSelected(Entry e, com.github.mikephil.charting.highlight.Highlight h) {
+            public void onValueSelected(Entry e, Highlight h) {
                 int index = Math.round(e.getX());
-                if (index >= 0 && index < logs.size()) {
-                    WorkoutLogResponse selectedLog = logs.get(index);
-
-                    // Construimos el mensaje completo con la fecha, peso y repeticiones reales
-                    String info = "📅 " + fechas.get(index) + "\n" +
-                            "💪 Peso: " + selectedLog.getWeight() + " kg\n" +
-                            "🔁 Repeticiones: " + selectedLog.getReps();
-
-                    Toast.makeText(getContext(), info, Toast.LENGTH_SHORT).show();
+                if (index >= 0 && index < dailyList.size()) {
+                    DailyProgress selected = dailyList.get(index);
+                    showDetailsDialog(selected);
                 }
             }
 
@@ -243,8 +261,40 @@ public class ProgressFragment extends Fragment {
 
         LineData lineData = new LineData(dataSet);
         lineChart.setData(lineData);
-        lineChart.setExtraBottomOffset(20f);
+        lineChart.setExtraBottomOffset(30f); // Más espacio para las fechas rotadas
         lineChart.animateX(800);
         lineChart.invalidate();
+    }
+
+    private void showDetailsDialog(DailyProgress dp) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("📅 Fecha: ").append(dp.date).append("\n\n");
+        sb.append("Series realizadas:\n");
+        for (String detail : dp.details) {
+            sb.append("   • ").append(detail).append("\n");
+        }
+        sb.append("\n⚖️ Volumen Total: ").append(dp.totalVolume).append(" kg");
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Detalle del Entrenamiento")
+                .setMessage(sb.toString())
+                .setPositiveButton("Cerrar", null)
+                .show();
+    }
+
+    // Clase interna para agrupar los datos de un mismo día
+    private static class DailyProgress {
+        String date;
+        double totalVolume = 0;
+        List<String> details = new ArrayList<>();
+
+        DailyProgress(String date) {
+            this.date = date;
+        }
+
+        void addSet(double weight, int reps) {
+            totalVolume += (weight * reps);
+            details.add("Peso: " + weight + " kg | Reps: " + reps);
+        }
     }
 }

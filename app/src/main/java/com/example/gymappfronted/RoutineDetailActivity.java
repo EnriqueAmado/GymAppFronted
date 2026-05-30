@@ -80,8 +80,15 @@ public class RoutineDetailActivity extends AppCompatActivity {
                 // Pasamos el ID de la relación y el nombre asegurando los métodos del modelo
                 intent.putExtra("ROUTINE_EXERCISE_ID", exercise.getId());
                 intent.putExtra("EXERCISE_NAME", exercise.getExerciseName());
-
                 intent.putExtra("TARGET_SETS", exercise.getSets());
+
+                // Buscamos el ID real del ejercicio en el catálogo para poder usar el endpoint de progreso
+                for (Exercise ex : catalogExercises) {
+                    if (ex.getName().equals(exercise.getExerciseName())) {
+                        intent.putExtra("EXERCISE_ID", ex.getId());
+                        break;
+                    }
+                }
 
                 startActivity(intent);
             }
