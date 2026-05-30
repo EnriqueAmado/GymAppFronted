@@ -3,6 +3,7 @@ package com.example.gymappfronted;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -136,36 +137,95 @@ public class RoutineDetailActivity extends AppCompatActivity {
         });
     }
 
-    // Despliega el formulario flotante
+    // Despliega el formulario flotante con filtros
     private void showAddExerciseDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_add_exercise, null);
         builder.setView(dialogView);
 
-        // Enlazar los campos del XML del diálogo
-        Spinner spinner = dialogView.findViewById(R.id.spinnerExercises);
+        Spinner spinnerMuscle = dialogView.findViewById(R.id.spinnerMuscleGroup);
+        EditText etSearch = dialogView.findViewById(R.id.etSearchExercise);
+        Spinner spinnerExercises = dialogView.findViewById(R.id.spinnerExercises);
+        
         EditText etSets = dialogView.findViewById(R.id.etSets);
         EditText etReps = dialogView.findViewById(R.id.etReps);
         EditText etOrder = dialogView.findViewById(R.id.etOrder);
 
-        // Meter los nombres de los ejercicios en el Spinner (Desplegable)
-        List<String> exerciseNames = new ArrayList<>();
+        // 1. Cargar Grupos Musculares únicos
+        List<String> muscleGroups = new ArrayList<>();
+        muscleGroups.add("Todos");
+        
+        Log.d("RoutineDetail_DEBUG", "Cargando grupos musculares de " + catalogExercises.size() + " ejercicios");
+        
         for (Exercise ex : catalogExercises) {
-            exerciseNames.add(ex.getName()); // Asume que tu modelo Exercise tiene getName()
+            String part = ex.getBodyPart();
+            Log.d("RoutineDetail_DEBUG", "Ejercicio: " + ex.getName() + " | Grupo: " + part);
+            
+            if (part != null && !part.trim().isEmpty()) {
+                String normalizedPart = part.trim();
+                if (!muscleGroups.contains(normalizedPart)) {
+                    muscleGroups.add(normalizedPart);
+                }
+            }
         }
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, exerciseNames);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
+        
+        Log.d("RoutineDetail_DEBUG", "Grupos detectados: " + muscleGroups.toString());
+        ArrayAdapter<String> muscleAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, muscleGroups);
+        muscleAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerMuscle.setAdapter(muscleAdapter);
 
-        // Configurar botones del diálogo
+        // Lista filtrada que se mostrará en el segundo spinner
+        List<Exercise> filteredExercises = new ArrayList<>(catalogExercises);
+        List<String> exerciseNames = new ArrayList<>();
+        
+        // Adaptador para los ejercicios
+        ArrayAdapter<String> exerciseAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, exerciseNames);
+        exerciseAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerExercises.setAdapter(exerciseAdapter);
+
+        // Función para actualizar el filtro
+        Runnable updateFilter = () -> {
+            String selectedMuscle = spinnerMuscle.getSelectedItem().toString();
+            String searchText = etSearch.getText().toString().toLowerCase().trim();
+            
+            filteredExercises.clear();
+            exerciseNames.clear();
+            
+            for (Exercise ex : catalogExercises) {
+                boolean matchesMuscle = selectedMuscle.equals("Todos") || (ex.getBodyPart() != null && ex.getBodyPart().equals(selectedMuscle));
+                boolean matchesSearch = ex.getName().toLowerCase().contains(searchText);
+                
+                if (matchesMuscle && matchesSearch) {
+                    filteredExercises.add(ex);
+                    exerciseNames.add(ex.getName());
+                }
+            }
+            exerciseAdapter.notifyDataSetChanged();
+        };
+
+        // Escuchar cambios en el filtro de músculo
+        spinnerMuscle.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                updateFilter.run();
+            }
+            @Override
+            public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+        });
+
+        // Escuchar cambios en la búsqueda por texto
+        etSearch.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { updateFilter.run(); }
+            @Override public void afterTextChanged(android.text.Editable s) {}
+        });
+
         builder.setPositiveButton("Guardar", (dialog, which) -> {
-            if (catalogExercises.isEmpty() || spinner.getSelectedItem() == null) {
+            if (filteredExercises.isEmpty() || spinnerExercises.getSelectedItem() == null) {
                 Toast.makeText(this, "No hay ejercicio seleccionado", Toast.LENGTH_SHORT).show();
                 return;
             }
-
-            // Impide que se cierre la app si queda algo vacío
 
             String strSets = etSets.getText().toString().trim();
             String strReps = etReps.getText().toString().trim();
@@ -176,31 +236,27 @@ public class RoutineDetailActivity extends AppCompatActivity {
                 return;
             }
 
-            // Obtener el ejercicio seleccionado y sus datos
-            int selectedPosition = spinner.getSelectedItemPosition();
-            Exercise selectedExercise = catalogExercises.get(selectedPosition);
+            // IMPORTANTE: Obtenemos el ejercicio de la lista FILTRADA
+            int selectedPosition = spinnerExercises.getSelectedItemPosition();
+            Exercise selectedExercise = filteredExercises.get(selectedPosition);
 
-            int sets = Integer.parseInt(etSets.getText().toString().trim());
-            int reps = Integer.parseInt(etReps.getText().toString().trim());
-            int order = Integer.parseInt(etOrder.getText().toString().trim());
+            int sets = Integer.parseInt(strSets);
+            int reps = Integer.parseInt(strReps);
+            int order = Integer.parseInt(strOrder);
 
-            // Crear el objeto Request que irá a Django
             RoutineExerciseRequest request = new RoutineExerciseRequest(
                     routineId,
-                    selectedExercise.getId(), // Asume que tu modelo Exercise tiene getId()
+                    selectedExercise.getId(),
                     sets,
                     reps,
                     order
             );
 
-            // Enviar el POST a Django
             sendExerciseToBackend(request);
         });
 
         builder.setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss());
-
-        AlertDialog dialog = builder.create();
-        dialog.show();
+        builder.create().show();
     }
 
     // Envía el ejercicio asignado a Django
