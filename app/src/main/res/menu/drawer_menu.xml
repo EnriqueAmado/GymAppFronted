@@ -9,6 +9,10 @@
             android:icon="@android:drawable/ic_menu_today"
             android:title="Mis Rutinas" />
         <item
+            android:id="@+id/nav_history"
+            android:icon="@android:drawable/ic_menu_my_calendar"
+            android:title="Mi Historial" />
+        <item
             android:id="@+id/nav_progress"
             android:icon="@android:drawable/ic_menu_sort_by_size"
             android:title="Mi Progreso" />

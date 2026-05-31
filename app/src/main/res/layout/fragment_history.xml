@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#121212"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Mi Historial"
+        android:textColor="#FFFFFF"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
+
+    <CalendarView
+        android:id="@+id/calendarView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#1E1E1E"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:id="@+id/tvHistoryDate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Entrenamientos del día"
+        android:textColor="#00E676"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvHistoryLogs"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <TextView
+        android:id="@+id/tvNoHistoryData"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="No hay registros para este día"
+        android:gravity="center"
+        android:textColor="#888888"
+        android:visibility="gone"
+        android:layout_marginTop="20dp"/>
+
+</LinearLayout>

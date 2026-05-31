@@ -35,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Configuración de la navegación lateral
         mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_routines, R.id.nav_progress, R.id.nav_catalog, R.id.nav_account)
+                R.id.nav_routines, R.id.nav_history, R.id.nav_progress, R.id.nav_catalog, R.id.nav_account)
                 .setOpenableLayout(drawer)
                 .build();
 

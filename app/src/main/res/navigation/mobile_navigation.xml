@@ -12,6 +12,12 @@
         tools:layout="@layout/fragment_routines" />
 
     <fragment
+        android:id="@+id/nav_history"
+        android:name="com.example.gymappfronted.Fragments.HistoryFragment"
+        android:label="Mi Historial"
+        tools:layout="@layout/fragment_history" />
+
+    <fragment
         android:id="@+id/nav_progress"
         android:name="com.example.gymappfronted.Fragments.ProgressFragment"
         android:label="Mi Progreso"

@@ -83,7 +83,7 @@ public class RoutineDetailActivity extends AppCompatActivity {
                 intent.putExtra("EXERCISE_NAME", exercise.getExerciseName());
                 intent.putExtra("TARGET_SETS", exercise.getSets());
 
-                // Buscamos el ID real del ejercicio en el catálogo para poder usar el endpoint de progreso
+                // Buscamos el ID real del ejercicio en el catálogo
                 for (Exercise ex : catalogExercises) {
                     if (ex.getName().equals(exercise.getExerciseName())) {
                         intent.putExtra("EXERCISE_ID", ex.getId());

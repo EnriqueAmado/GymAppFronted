@@ -11,7 +11,7 @@ public class Exercise {
     @SerializedName("description")
     private String description;
 
-    @SerializedName("body_part") // Coincide con el campo de Django
+    @SerializedName("body_part")
     private String bodyPart;
 
     // Constructor vacío obligatorio para Retrofit
