@@ -46,6 +46,10 @@ cd GymAppBackend
 # Activar entorno virtual (.venv) en Windows
 .venv\Scripts\activate
 
+# Instalar dependencias esenciales
+pip install django django-cors-headers djangorestframework
+
+
 2. Migración e Inyección Masiva de Datos
 Crea las tablas de la base de datos e inyecta la lista inicial de 22 ejercicios profesionales de fitness directamente desde el ORM de Django:
 
