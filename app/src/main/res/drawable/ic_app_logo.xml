@@ -1,0 +1,37 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+
+    <!-- Círculo de fondo -->
+    <path
+        android:fillColor="#00C853"
+        android:pathData="M50,50m-45,0a45,45 0,1 1,90 0a45,45 0,1 1,-90 0" />
+
+    <!-- Una pesa (Dumbbell) estilizada en el centro -->
+    <group
+        android:translateX="15"
+        android:translateY="25">
+        <!-- Barra -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M15,22h40v6h-40z" />
+
+        <!-- Pesas Izquierdas -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M5,13h6v24h-6z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M11,7h4v36h-4z" />
+
+        <!-- Pesas Derechas -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M59,13h6v24h-6z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M55,7h4v36h-4z" />
+    </group>
+</vector>
