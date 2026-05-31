@@ -15,7 +15,10 @@ import com.example.gymappfronted.Models.WorkoutLogResponse;
 import com.example.gymappfronted.R;
 import com.example.gymappfronted.Remote.RetrofitClient;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -23,7 +26,7 @@ import retrofit2.Response;
 
 public class AccountFragment extends Fragment {
 
-    private TextView tvUser, tvEmail, tvTotalWorkouts;
+    private TextView tvUser, tvEmail, tvTotalVolume, tvTotalSets, tvFavoriteExercise;
 
     @Nullable
     @Override
@@ -32,7 +35,9 @@ public class AccountFragment extends Fragment {
 
         tvUser = view.findViewById(R.id.tvAccountUser);
         tvEmail = view.findViewById(R.id.tvAccountEmail);
-        tvTotalWorkouts = view.findViewById(R.id.tvTotalWorkouts);
+        tvTotalVolume = view.findViewById(R.id.tvStatTotalVolume);
+        tvTotalSets = view.findViewById(R.id.tvStatTotalSets);
+        tvFavoriteExercise = view.findViewById(R.id.tvStatFavoriteExercise);
 
         SharedPreferences prefs = getActivity().getSharedPreferences("GymAppPrefs", Context.MODE_PRIVATE);
         String username = prefs.getString("username", "No disponible");
@@ -42,26 +47,52 @@ public class AccountFragment extends Fragment {
         tvUser.setText("Nombre de usuario: " + username);
         tvEmail.setText("Email: " + email);
 
-        loadWorkoutCount(token);
+        loadStatistics(token);
 
         return view;
     }
 
-    private void loadWorkoutCount(String token) {
+    private void loadStatistics(String token) {
         RetrofitClient.getApiService().getWorkoutLogs(token).enqueue(new Callback<List<WorkoutLogResponse>>() {
             @Override
             public void onResponse(Call<List<WorkoutLogResponse>> call, Response<List<WorkoutLogResponse>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    int count = response.body().size();
-                    tvTotalWorkouts.setText("Total de series registradas: " + count);
+                    List<WorkoutLogResponse> logs = response.body();
+                    
+                    double totalKg = 0;
+                    int totalSets = logs.size();
+                    Map<String, Integer> exerciseCounts = new HashMap<>();
+
+                    for (WorkoutLogResponse log : logs) {
+                        totalKg += (log.getWeight() * log.getReps());
+                        String name = log.getExerciseName();
+                        if (name != null) {
+                            exerciseCounts.put(name, exerciseCounts.getOrDefault(name, 0) + 1);
+                        }
+                    }
+
+                    // Encontrar el favorito
+                    String favorite = "Ninguno";
+                    int max = 0;
+                    for (Map.Entry<String, Integer> entry : exerciseCounts.entrySet()) {
+                        if (entry.getValue() > max) {
+                            max = entry.getValue();
+                            favorite = entry.getKey();
+                        }
+                    }
+
+                    // Actualizar interfaz
+                    if (isAdded()) {
+                        tvTotalVolume.setText(String.format(Locale.getDefault(), "%.0f", totalKg));
+                        tvTotalSets.setText(String.valueOf(totalSets));
+                        tvFavoriteExercise.setText(favorite);
+                    }
                 }
             }
 
             @Override
             public void onFailure(Call<List<WorkoutLogResponse>> call, Throwable t) {
-                if (isAdded()) {
-                    tvTotalWorkouts.setText("Total de series: Error al cargar");
-                }
+                // Error silencioso
             }
         });
     }
