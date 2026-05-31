@@ -230,9 +230,11 @@ public class ProgressFragment extends Fragment {
         // CONFIGURACIÓN DEL EJE X (FECHAS)
         com.github.mikephil.charting.components.XAxis xAxis = lineChart.getXAxis();
         xAxis.setTextColor(Color.WHITE);
-        xAxis.setGranularity(1f); // Asegura que se muestre una etiqueta por cada punto
+        xAxis.setGranularity(1f); 
         xAxis.setLabelRotationAngle(-45f);
         xAxis.setPosition(com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM);
+        xAxis.setAvoidFirstLastClipping(true); // Evita que la primera/última fecha se corten
+        
         xAxis.setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
@@ -243,6 +245,15 @@ public class ProgressFragment extends Fragment {
                 return "";
             }
         });
+
+        // AJUSTES DE LÍMITES PARA QUE NO SE SALGAN LOS PUNTOS NI SE SOLAPEN CON EL EJE Y
+        xAxis.setSpaceMin(0.5f); // Añade espacio antes del primer punto
+        xAxis.setSpaceMax(0.5f); // Añade espacio después del último punto
+        xAxis.setAvoidFirstLastClipping(false); // Desactivamos esto para usar el Space manual que es más preciso
+
+        // Ajuste del eje Y para que los valores de peso no toquen el techo
+        lineChart.getAxisLeft().setSpaceTop(20f);
+        lineChart.getAxisLeft().setSpaceBottom(20f);
 
         // Interactividad para mostrar detalles de las series al pulsar el punto
         lineChart.setOnChartValueSelectedListener(new OnChartValueSelectedListener() {
@@ -261,7 +272,7 @@ public class ProgressFragment extends Fragment {
 
         LineData lineData = new LineData(dataSet);
         lineChart.setData(lineData);
-        lineChart.setExtraBottomOffset(30f); // Más espacio para las fechas rotadas
+        lineChart.setExtraOffsets(10f, 10f, 10f, 40f); // Más margen en los 4 lados para evitar recortes
         lineChart.animateX(800);
         lineChart.invalidate();
     }
